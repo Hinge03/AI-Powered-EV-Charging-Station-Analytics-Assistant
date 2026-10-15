@@ -47,7 +47,7 @@ for message in st.session_state.messages:
 # --------------------------------------------------
 
 user_input = st.chat_input(
-    "Ask about questions like, Give me station wise total revenue...."
+    "Ask questions like, Give me station wise total revenue...."
 )
 
 
