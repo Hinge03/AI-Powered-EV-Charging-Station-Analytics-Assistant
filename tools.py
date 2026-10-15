@@ -49,67 +49,53 @@ def get_database_schema() -> str:
 
     return "\n".join(schema)
 
+
+
 @tool
 def execute_sql(query: str) -> str:
     """
-    Execute a SELECT SQL query on the SQLite database.
-
-    Rules:
-    - Only execute SELECT queries.
-    - Do not execute INSERT, UPDATE, DELETE, DROP, ALTER, etc.
-    - Do not include a trailing semicolon.
-    - Use SQLite SQL syntax.
+    Execute a read-only SELECT query on the EV database.
     """
+
     query = query.strip()
 
     if not query.lower().startswith("select"):
         return "SQL Error: Only SELECT queries are allowed."
 
-    try:
+    conn = None
 
+    try:
         conn = sqlite3.connect(DB_PATH)
 
         cursor = conn.cursor()
-
         cursor.execute(query)
 
         rows = cursor.fetchall()
 
+        if not rows:
+            return "No results found. The query returned zero rows."
+
         columns = [description[0] for description in cursor.description]
 
-        MAX_ROWS = 50
-
-        limited_rows = rows[:MAX_ROWS]
-
         result = []
-
         result.append(" | ".join(columns))
         result.append("-" * 80)
 
-        for row in limited_rows:
-
+        for row in rows[:50]:
             result.append(
-                " | ".join(
-                    str(value)
-                    for value in row
-                )
+                " | ".join(str(value) for value in row)
             )
 
-        if len(rows) > MAX_ROWS:
-
+        if len(rows) > 50:
             result.append(
-                f"\nShowing first {MAX_ROWS} rows "
-                f"out of {len(rows)} rows."
+                f"Showing first 50 rows out of {len(rows)} rows."
             )
 
         return "\n".join(result)
 
     except Exception as e:
-
         return f"SQL Error: {str(e)}"
 
     finally:
-
-        if conn:
+        if conn is not None:
             conn.close()
-
